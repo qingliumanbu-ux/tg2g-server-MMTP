@@ -542,8 +542,22 @@ int f_mmtp_loadQuery(EIClass * bcls_rec, EIClass * bcls_ret, CDbConnection * con
 						break;
 					case DB_KIND_DB2:	        // DB2 数据库（未开Oracle兼容）
 					case DB_KIND_DB2_ORACLE:	// DB2 数据库（开Oracle兼容）
+// DM8 适配 CHANGE-360:查询。SYSIBM 辅助表改为 DUAL。
+// 改写原因：SYSIBM 辅助表改为 DUAL；依据 DM 官方文档,DM8 尚未实测。
+// 本共用分支面向 DM8,其他 DB_KIND 标签也会执行此 SQL;参数、结果列、条件与排序保持不变。
+// 原 SQL（完整保留）：
+						// sqlstr = "SELECT remarks FROM SYSIBM.SYSTABLES WHERE name = '" + tableName +
+							// "' AND creator = (SELECT current schema FROM sysibm.sysdummy1)";
+// DM8 SQL：
+// DM8 适配 CHANGE-275:查询。见改写原因。
+// 改写原因：DB2 特殊寄存器 current date/time/timestamp/schema 改为 DM 的 CURRENT_DATE/CURRENT_TIME/CURRENT_TIMESTAMP/CURRENT_SCHEMA(官方函数手册支持)；依据 DM 官方文档,DM8 尚未实测。
+// 本共用分支面向 DM8,其他 DB_KIND 标签也会执行此 SQL;参数、结果列、条件与排序保持不变。
+// 原 SQL（完整保留）：
+						// sqlstr = "SELECT remarks FROM SYSIBM.SYSTABLES WHERE name = '" + tableName +
+							// "' AND creator = (SELECT current schema FROM DUAL)";
+// DM8 SQL：
 						sqlstr = "SELECT remarks FROM SYSIBM.SYSTABLES WHERE name = '" + tableName +
-							"' AND creator = (SELECT current schema FROM sysibm.sysdummy1)";
+							"' AND creator = (SELECT CURRENT_SCHEMA FROM DUAL)";
 						break;
 					case DB_KIND_ORACLE:	    // Oracle 数据库
 					default:

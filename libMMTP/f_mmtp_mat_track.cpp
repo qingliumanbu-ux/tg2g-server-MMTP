@@ -979,8 +979,15 @@ int f_mmtp_mat_track(EIClass * bcls_rec, EIClass * bcls_ret, CDbConnection * con
 										break;
 									case DB_KIND_DB2:	        // DB2 数据库（未开Oracle兼容）
 									case DB_KIND_DB2_ORACLE:	// DB2 数据库（开Oracle兼容）
+// DM8 适配 CHANGE-360:查询字段定义长度,从系统目录 SYSIBM.SYSCOLUMNS 取 length(按表名、字段名与当前模式过滤)。
+// 改写原因：SYSIBM 辅助表改为 DUAL；DB2 特殊寄存器 current date/time/timestamp/schema 改为 DM 的 CURRENT_DATE/CURRENT_TIME/CURRENT_TIMESTAMP/CURRENT_SCHEMA(官方函数手册支持)；依据 DM 官方文档,DM8 尚未实测。
+// 本共用分支面向 DM8,其他 DB_KIND 标签也会执行此 SQL;参数、结果列、条件与排序保持不变。
+// 原 SQL（完整保留）：
+										// strSql = "SELECT length FROM sysibm.syscolumns WHERE tbname ='" + tableName +
+											// "' AND name = '" + itemEName + "' AND tbcreator = (SELECT current schema FROM sysibm.sysdummy1)";
+// DM8 SQL：
 										strSql = "SELECT length FROM sysibm.syscolumns WHERE tbname ='" + tableName +
-											"' AND name = '" + itemEName + "' AND tbcreator = (SELECT current schema FROM sysibm.sysdummy1)";
+											"' AND name = '" + itemEName + "' AND tbcreator = (SELECT CURRENT_SCHEMA FROM DUAL)";
 										break;
 									case DB_KIND_ORACLE:	    // Oracle 数据库
 									default:
